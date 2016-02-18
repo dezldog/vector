@@ -13,12 +13,13 @@
 
 // Needed for Adafruit RA8875 communication
 // Library only supports hardware SPI at this time
-// Connect SCLK to UNO Digital #13 (Hardware SPI clock)
-// Connect MISO to UNO Digital #12 (Hardware SPI MISO)
-// Connect MOSI to UNO Digital #11 (Hardware SPI MOSI)
-#define RA8875_INT 3
-#define RA8875_CS 10
-#define RA8875_RESET 9
+// Connect SCLK to DUE SPI 3 (Hardware SPI clock)
+// Connect MISO to DUE SPI 1 (Hardware SPI MISO)
+// Connect MOSI to DUE SPI 4 (Hardware SPI MOSI)
+#define RA8875_INT 51
+#define RA8875_CS 52
+#define RA8875_RESET 53
+
 Adafruit_RA8875 tft = Adafruit_RA8875(RA8875_CS, RA8875_RESET);
 uint16_t tx, ty;
 
