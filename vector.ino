@@ -94,31 +94,6 @@ void setup()
   tft.PWM1out(255);
   tft.fillScreen(RA8875_BLACK);
   tft.textMode(); //Switch to text - keep it simple for now  
-  tft.textSetCursor(10, 10);
-  // Render some text!
-  char string[15] = "Hello, World! ";
-  tft.textTransparent(RA8875_WHITE);
-  tft.textWrite(string);
-  tft.textColor(RA8875_WHITE, RA8875_RED);
-  tft.textWrite(string);
-  tft.textTransparent(RA8875_CYAN);
-  tft.textWrite(string);
-  tft.textTransparent(RA8875_GREEN);
-  tft.textWrite(string);
-  tft.textColor(RA8875_YELLOW, RA8875_CYAN);
-  tft.textWrite(string);
-  tft.textColor(RA8875_BLACK, RA8875_MAGENTA);
-  tft.textWrite(string);
-  // Change the cursor location and color ...  
-  tft.textSetCursor(100, 100);
-  tft.textTransparent(RA8875_RED);
-  // If necessary, enlarge the font 
-  tft.textEnlarge(1);
-  // ... and render some more text! 
-  tft.textWrite(string);
-  tft.textSetCursor(100, 150);
-  tft.textEnlarge(2);
-  tft.textWrite(string);  
   
   //Start TXT LCDs
   lcd0.begin(16, 4);
@@ -193,11 +168,14 @@ void loop()
       elevation = GPS.altitude;  
     }
 
-    //write to the LCD
+    //Write to Graphic LCD
+    displayGraphic();
+
+    //Write to the TXT LCDs
     displayLcd0();
     displayLcd1();
     
-    // send serial
+    //Send serial
     writeToSerial();
 
     //Send to 7 Segment displays
@@ -427,3 +405,50 @@ void displayTime()
   // Now push out to the display the new values that were set above.
   matrix1.writeDisplay();
 }
+
+void displayGraphic()
+  {
+    //The clock bit
+    int hours = GPS.hour + HOUR_OFFSET;
+    int minutes = GPS.minute;
+    int seconds = GPS.seconds;
+    float Longitude = GPS.longitudeDegrees;
+    float Latitude = GPS.latitudeDegrees;
+
+    if (hours < 0) 
+      {
+        hours = 24+hours;
+      }
+    if (hours > 23) 
+      {
+        hours = 24-hours;
+      }
+
+    if (!TIME_24_HOUR) {
+      if (hours > 12) {
+        hours -= 12;
+        }
+      else if (hours == 0) {
+        hours += 12;
+        }
+    }  
+
+    tft.fillScreen(RA8875_BLACK);
+    tft.textSetCursor(10, 10);
+    tft.textTransparent(RA8875_WHITE);
+    tft.textEnlarge(2); 
+
+    char time_buff[32];
+    sprintf( time_buff, "%02d:%02d:%02d", hours, minutes, seconds);
+    tft.textWrite( time_buff );
+
+    //The Lat and Lon 
+    tft.textSetCursor(10, 420);
+    char loc_buff[32];
+    sprintf( loc_buff,"Lat:%f Lon:%f", Latitude,Longitude );
+    tft.textWrite (loc_buff);
+    
+    
+  }
+
+
