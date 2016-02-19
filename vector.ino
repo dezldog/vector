@@ -10,6 +10,7 @@
 #include "SPI.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_RA8875.h"
+#include "Fonts/FreeSans24pt7b.h"
 
 // Needed for Adafruit RA8875 communication
 // Library only supports hardware SPI at this time
@@ -23,6 +24,9 @@
 Adafruit_RA8875 tft = Adafruit_RA8875(RA8875_CS, RA8875_RESET);
 uint16_t tx, ty;
 
+//My colors
+//#define MY_TEAL "0x7BEF"
+
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences.
 #define GPSECHO  false
@@ -32,7 +36,7 @@ uint16_t tx, ty;
 #define UNITS 1
 
 //What timezone to display?
-//GMT = 0, PST = -8
+//GMT = 0, PST = -8, PDT = -7
 #define HOUR_OFFSET -8
 
 //24 or 12hr time?
@@ -408,7 +412,7 @@ void displayTime()
 
 void displayGraphic()
   {
-    //The clock bit
+    //The clock calculation bit
     int hours = GPS.hour + HOUR_OFFSET;
     int minutes = GPS.minute;
     int seconds = GPS.seconds;
@@ -431,23 +435,71 @@ void displayGraphic()
       else if (hours == 0) {
         hours += 12;
         }
-    }  
+      }  
 
-    tft.fillScreen(RA8875_BLACK);
-    tft.textSetCursor(10, 10);
-    tft.textTransparent(RA8875_WHITE);
-    tft.textEnlarge(2); 
-
+    //The display bit
+    int months = GPS.month;
+    int days = GPS.day;
+    int years = GPS.year;
+    int satellite = GPS.satellites;
+    int fix = GPS.fix;
     char time_buff[32];
+    char velo_buff[6];
+    char elev_buff[6];
+    char loc_buff[32];
+    char date_buff[10];
+    char sat_buff[3];
+    char fix_buff[4];
+    
+    tft.fillScreen(0x024B); // darker cyan
+    tft.setFont(&FreeSans24pt7b);
+    tft.textEnlarge(1); 
+
+    tft.textSetCursor(660, 10); 
+    tft.textTransparent(0x373B); //funny green
     sprintf( time_buff, "%02d:%02d:%02d", hours, minutes, seconds);
     tft.textWrite( time_buff );
 
-    //The Lat and Lon 
+    tft.textSetCursor(10,10);
+    tft.textTransparent(0x373B); //funny green
+    sprintf( date_buff, "%02d/%02d/%02d", months, days, years);
+    tft.textWrite( date_buff );
+
+    tft.textSetCursor(400, 200);
+    tft.textTransparent(0xF4E1); //orange
+    tft.textEnlarge(6);
+    sprintf(velo_buff, "%.1f Mph", velocity);
+    tft.textWrite(velo_buff);
+
+    tft.textSetCursor(10, 360);
+    tft.textEnlarge(1);
+    tft.textTransparent(0xF81F); //magenta
+    sprintf(elev_buff, "Altitude %.1f ft", elevation);
+    tft.textWrite(elev_buff);
+
+    tft.textSetCursor(240, 420);
+    tft.textTransparent(0xF81F); //magenta
+    sprintf(sat_buff, "%02d satellites Available", satellite);
+    tft.textWrite(sat_buff);
+
     tft.textSetCursor(10, 420);
-    char loc_buff[32];
-    sprintf( loc_buff,"Lat:%f Lon:%f", Latitude,Longitude );
+    if (fix)  //Sets color for FIX as well...
+      {
+        tft.textTransparent(RA8875_GREEN);
+        sprintf(fix_buff, "GPS FIX", fix);
+      }
+    else
+      {
+        tft.textTransparent(RA8875_RED);
+        sprintf(fix_buff, "GPS NO FIX", fix);
+      }
+    tft.textWrite(fix_buff);
+
+    //The Lat and Lon and FIX
+    tft.textSetCursor(10, 390);
+    tft.textEnlarge(1);
+    sprintf( loc_buff,"Lat:%f      Lon:%f", Latitude,Longitude );
     tft.textWrite (loc_buff);
-    
     
   }
 
