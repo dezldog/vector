@@ -17,15 +17,12 @@
 // Connect SCLK to DUE SPI 3 (Hardware SPI clock)
 // Connect MISO to DUE SPI 1 (Hardware SPI MISO)
 // Connect MOSI to DUE SPI 4 (Hardware SPI MOSI)
-#define RA8875_INT 51
-#define RA8875_CS 52
-#define RA8875_RESET 53
-
-Adafruit_RA8875 tft = Adafruit_RA8875(RA8875_CS, RA8875_RESET);
-uint16_t tx, ty;
-
-//My colors
-//#define MY_TEAL "0x7BEF"
+//#define RA8875_INT 51
+//#define RA8875_CS 52
+//#define RA8875_RESET 53
+//
+//Adafruit_RA8875 tft = Adafruit_RA8875(RA8875_CS, RA8875_RESET);
+//uint16_t tx, ty;
 
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences.
@@ -63,6 +60,7 @@ int hours = 0;
 int minutes = 0;
 int seconds = 0;
 int sats = 0;
+int fill = 0000;
 float velocity = 0;
 float elevation = 0;
 
@@ -84,6 +82,7 @@ void setup()
   matrix0.begin(0x70);
   matrix1.begin(0x71);
 
+/*  
   //Start Graphic LCD
   Serial.println("RA8875 start");
 
@@ -96,9 +95,9 @@ void setup()
   tft.GPIOX(true);      // Enable TFT - display enable tied to GPIOX
   tft.PWM1config(true, RA8875_PWM_CLK_DIV1024); // PWM output for backlight
   tft.PWM1out(255);
-  tft.fillScreen(RA8875_BLACK);
+  tft.fillScreen(0x024B);
   tft.textMode(); //Switch to text - keep it simple for now  
-  
+*/  
   //Start TXT LCDs
   lcd0.begin(16, 4);
   lcd1.begin(16, 4);
@@ -173,7 +172,7 @@ void loop()
     }
 
     //Write to Graphic LCD
-    displayGraphic();
+    //displayGraphic();
 
     //Write to the TXT LCDs
     displayLcd0();
@@ -409,7 +408,7 @@ void displayTime()
   // Now push out to the display the new values that were set above.
   matrix1.writeDisplay();
 }
-
+/*
 void displayGraphic()
   {
     //The clock calculation bit
@@ -500,7 +499,7 @@ void displayGraphic()
     tft.textEnlarge(1);
     sprintf( loc_buff,"Lat:%f      Lon:%f", Latitude,Longitude );
     tft.textWrite (loc_buff);
-    
   }
+*/
 
 
