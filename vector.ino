@@ -30,6 +30,13 @@ float volts = 0;
 //GMT = 0, PST = -8, PDT = -7
 #define HOUR_OFFSET -8
 
+// Is it DST?
+#define DST 0
+const int dstPin = 9;
+int dstON = 0;
+
+int displayValue = 0;
+
 //24 or 12hr time?
 #define TIME_24_HOUR   false
 
@@ -70,7 +77,10 @@ void setup()
   gpsSerial.begin (GPSBaud);
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
-  GPS.sendCommand(PGCMD_ANTENNA);  
+  GPS.sendCommand(PGCMD_ANTENNA);
+
+  //DST button
+  pinMode(dstPin, INPUT);
 
   //Start 7 segment displays
   matrix0.begin(0x70);
@@ -85,7 +95,7 @@ void setup()
   lcd0.setCursor(0, 1);
   lcd0.print("Start-Up Complete");
   lcd0.setCursor(0, 2);
-  lcd0.print("Version 19FEB16.1");
+  lcd0.print("Version -spectre-");
   lcd0.setCursor(0, 3);
   for (int x = 0; x < 20; x++)
   {
@@ -154,8 +164,6 @@ void loop()
       velocity = GPS.speed;
       elevation = GPS.altitude;  
     }
-
- // get_dhtData();
 
    //Write to Graphic LCD
    //displayGraphic();
@@ -362,7 +370,16 @@ void displayTime()
     
   int minutes = GPS.minute;
   int seconds = GPS.seconds;
-  int displayValue = hours*100 + minutes;
+  
+  if (isDST())
+    {
+     displayValue = (hours + 1)*100 + minutes;
+      
+    }
+  else
+    {
+      displayValue = hours*100 + minutes;
+    }
 
   // Do 24 hour to 12 hour format conversion when required.
   if (!TIME_24_HOUR) {
@@ -401,3 +418,15 @@ void displayTime()
   matrix1.writeDisplay();
 }
 
+bool isDST()
+{
+  dstON = digitalRead(dstPin);
+  if (dstON == HIGH)
+    {
+      return 1;
+    } 
+  else
+    {
+      return 0;
+    }
+}
