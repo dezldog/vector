@@ -8,6 +8,7 @@
 #include "Adafruit_GPS.h"
 #include "Adafruit_LiquidCrystal.h"
 
+
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences.
 #define GPSECHO  false
@@ -52,9 +53,8 @@ Adafruit_LiquidCrystal lcd1(1);
 Adafruit_7segment matrix0 = Adafruit_7segment();
 Adafruit_7segment matrix1 = Adafruit_7segment();
 
-#define gpsSerial Serial1
-
-Adafruit_GPS GPS(&gpsSerial);
+//#define SERIALPORT   (Serial)
+Adafruit_GPS GPS(&Serial1);
 
 // Variables for formatting
 int hours = 0;
@@ -69,16 +69,37 @@ float heading;
 uint32_t timer = millis();
 int GPSBaud = 9600;
 
+//Stuff for Temperature probes
+// which pins are we using?
+#define THERM0 A1
+#define THERM1 A2
+// RTD Type and Ref Temp
+#define THERM_OHMS 10000
+#define THERM_TEMP 25
+// Sample for noise reduction
+#define THERM_SAMP 5
+// The beta coefficient of the thermistor
+#define BCOEFFICIENT 3950
+// the value of the voltage dividing resistor
+#define SERIESRESISTOR 10000
+// The actual variables
+float tempProbe0;
+float tempProbe1;
+
 void setup()
 {
   // Start gps
   Serial.begin(115200);
   GPS.begin(GPSBaud);
-  gpsSerial.begin (GPSBaud);
+  Serial1.begin (GPSBaud);
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
   GPS.sendCommand(PGCMD_ANTENNA);
 
+  // for temperature measurement stability
+  // likely not necessary for my circuit
+  //analogReference(EXTERNAL);
+  
   //DST button
   pinMode(dstPin, INPUT);
 
@@ -153,6 +174,8 @@ void loop()
   //Read and calculate Volts from potentiometer a/d value
   potReading = analogRead(potPin);
   volts = 3.3 + (potReading * slope);
+
+  getTemps();
   
   if (UNITS)
     {
@@ -164,9 +187,6 @@ void loop()
       velocity = GPS.speed;
       elevation = GPS.altitude;  
     }
-
-   //Write to Graphic LCD
-   //displayGraphic();
 
    //Write to the TXT LCDs
    displayLcd0();
@@ -316,8 +336,10 @@ void writeToSerial()
           }  
         else
         {
-          Serial.print(",,,,,,,,");
+          Serial.print(",,,,,,,,,,");
         }
+      Serial.print(tempProbe0); Serial.print(",");
+      Serial.print(tempProbe1); //Serial.print(",");
       Serial.println();
  
       }
@@ -348,9 +370,11 @@ void writeToSerial()
             Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
             Serial.print("Angle: ");Serial.println(GPS.angle);
             Serial.print("Geoid Height: ");Serial.println(GPS.geoidheight);
-            Serial.print("Voltage: ");Serial.println(volts);
           }
-    Serial.println();
+      Serial.print("Voltage: ");Serial.println(volts);
+      Serial.print("Temperature A:  "); Serial.print(tempProbe0); Serial.println(" *C");
+      Serial.print("Temperature B:  "); Serial.print(tempProbe1); Serial.println(" *C");
+      Serial.println();
     }
   }
 
@@ -416,6 +440,52 @@ void displayTime()
 
   // Now push out to the display the new values that were set above.
   matrix1.writeDisplay();
+}
+
+void getTemps()
+  {
+  uint8_t i;
+  int samples0[THERM_SAMP];
+  int samples1[THERM_SAMP];
+  float thermAverage0 = 0;
+  float thermAverage1 = 0;
+
+  // take N samples in a row, with a slight delay
+  for (i=0; i< THERM_SAMP; i++) {
+    samples0[i] = analogRead(THERM0);
+    samples1[i] = analogRead(THERM1);
+    delay(10);
+  }
+
+  // average all the samples out
+  for (i=0; i< THERM_SAMP; i++) {
+     thermAverage0 += samples0[i];
+     thermAverage1 += samples1[i];
+  }
+  thermAverage0 /= THERM_SAMP;
+  thermAverage1 /= THERM_SAMP;
+
+
+  // convert the value to resistance
+  thermAverage0 = 1023 / thermAverage0 - 1;
+  thermAverage1 = 1023 / thermAverage1 - 1;
+  thermAverage0 = SERIESRESISTOR / thermAverage0;
+  thermAverage1 = SERIESRESISTOR / thermAverage1;
+
+  tempProbe0 = thermAverage0 / THERM_OHMS;
+  tempProbe0 = log(tempProbe0);
+  tempProbe0 /= BCOEFFICIENT;
+  tempProbe0 += 1.0 / (THERM_TEMP + 273.15);
+  tempProbe0 = 1.0 / tempProbe0;
+  tempProbe0 -= 273.15;
+
+  tempProbe1 = thermAverage1 / THERM_OHMS;
+  tempProbe1 = log(tempProbe1);
+  tempProbe1 /= BCOEFFICIENT;
+  tempProbe1 += 1.0 / (THERM_TEMP + 273.15);
+  tempProbe1 = 1.0 / tempProbe1;
+  tempProbe1 -= 273.15;
+
 }
 
 bool isDST()
