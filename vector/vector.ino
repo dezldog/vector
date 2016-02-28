@@ -73,6 +73,7 @@ float altB;
 float tempB;
 float pressure;
 float presB;
+uint32_t timer = millis();
 
 //Stuff for Temperature probes
 #define THERM0 A1               //Where is the first RTD connected?
@@ -89,6 +90,7 @@ float tempProbe1;
 Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(54321);
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
 Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
+
 
 
 ////////////////////////////////////////////////////
@@ -174,31 +176,34 @@ void setup()
   lcd1.print("Ext:");
   lcd1.setCursor(11, 3);
   lcd1.print("VPot:");
+  
 }
 
 
 ////////////////////////////////////////////////////
 void loop()
 {
-  uint32_t timer = millis();
-  char c = GPS.read();
+ 
+    char c = GPS.read();
     
-  if (GPSECHO)                    //Print straight from GPS before codes
-    if (c) Serial.print(c);
-    
+    // if you want to debug, this is a good time to do it!
+    if (GPSECHO)
+      if (c) Serial.print(c);
+ 
   if (GPS.newNMEAreceived())
     {
-      if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
-        return;                         // if we fail to parse a sentence, just wait for another
-     }
-   
-  if (timer > millis())  timer = millis();  // if millis() or timer wraps around, reset it
-
-  if (millis() - timer > 1000)    // ~ every 1 seconds, print out the current stats
-    {
-      timer = millis(); // reset the timer
+    if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
+      return;  // we can fail to parse a sentence in which case we should just wait for another
     }
-  
+
+  // if millis() or timer wraps around, we'll just reset it
+  if (timer > millis())  timer = millis();
+
+  // approximately every 1 seconds or so, print out the current stats
+  if (millis() - timer > 1000)
+    {
+    timer = millis(); // reset the timer
+
   //Read and calculate Volts from potentiometer a/d value
   potReading = analogRead(potPin);
   volts = 3.3 + (potReading * slope);
@@ -233,6 +238,7 @@ void loop()
   //Send to 7 Segment displays
   displaySpeed();
   displayTime();
+  }
 }
 
 
@@ -332,16 +338,16 @@ void displayLcd1()
   {
     lcd1.setCursor(5, 0);
     lcd1.print(heading, 1);
-//    lcd1.setCursor(16, 0);
-//    lcd1.print(accelX, 1);
+    lcd1.setCursor(16, 0);
+    //lcd1.print(accelX, 1);
     lcd1.setCursor(5, 1);
     lcd1.print(presB, 1);
-//    lcd1.setCursor(16, 1);
-//    lcd1.print(accelY, 1);
+    lcd1.setCursor(16, 1);
+    //lcd1.print(accelY, 1);
     lcd1.setCursor(5, 2);
     lcd1.print(tempProbe0, 1);
-//    lcd1.setCursor(16, 2);
-//    lcd1.print(accelZ, 1);
+    lcd1.setCursor(16, 2);
+    //lcd1.print(accelZ, 1);
     lcd1.setCursor(5, 3);
     lcd1.print(tempProbe1, 1);
     lcd1.setCursor(16, 3);
@@ -357,12 +363,12 @@ void displaySpeed()
 void displayTime()     //Display pretty-ified time to one of the 7 seg displays
   {
    int hours = GPS.hour + HOUR_OFFSET;
- 
-  if (hours < 0) 
+
+   if (hours < 0) 
     {
       hours = 24+hours;
     }
-  if (hours > 23) 
+   if (hours > 23) 
     {
       hours = 24-hours;
     }
@@ -490,7 +496,7 @@ void getTemps()
   for (i=0; i< THERM_SAMP; i++) {
     samples0[i] = analogRead(THERM0);
     samples1[i] = analogRead(THERM1);
-    delay(10);
+    delay(20);
   }
 
   // average all the samples out
@@ -559,4 +565,3 @@ void getAccelMag()
         heading = 360 + heading;
       }
   }
-
