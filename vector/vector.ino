@@ -7,7 +7,9 @@
 #include "Adafruit_LEDBackpack.h"
 #include "Adafruit_GPS.h"
 #include "Adafruit_LiquidCrystal.h"
-
+#include "Adafruit_Sensor.h"
+#include "Adafruit_LSM303_U.h"
+#include "Adafruit_MPL3115A2.h"
 
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences.
@@ -56,7 +58,6 @@ Adafruit_7segment matrix1 = Adafruit_7segment();
 //#define SERIALPORT   (Serial)
 Adafruit_GPS GPS(&Serial1);
 
-// Variables for formatting
 int hours = 0;
 int minutes = 0;
 int seconds = 0;
@@ -64,6 +65,15 @@ int sats = 0;
 float velocity = 0;
 float elevation = 0;
 float heading;
+float accelX;
+float accelY;
+float accelZ;
+float Pi = 3.14159;
+float pascals;
+float altB;
+float tempB;
+float pressure;
+float presB;
 
 //Other variables
 uint32_t timer = millis();
@@ -86,6 +96,14 @@ int GPSBaud = 9600;
 float tempProbe0;
 float tempProbe1;
 
+//stuff for accelerometer/magnetic sensor/barometer
+Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(54321);
+Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
+Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
+
+
+
+
 void setup()
 {
   // Start gps
@@ -99,6 +117,21 @@ void setup()
   // for temperature measurement stability
   // likely not necessary for my circuit
   //analogReference(EXTERNAL);
+
+  // Start accelerometer/magnetometer
+  // Enable auto-gain
+  mag.enableAutoRange(true);
+  if(!accel.begin() || !mag.begin())
+  {
+    Serial.println("LSM303 not detected");
+    while(1);
+  }
+
+  //Barometer
+  if (! baro.begin()) {
+    Serial.println("Couldnt find Barometer");
+    return;
+  }
   
   //DST button
   pinMode(dstPin, INPUT);
@@ -141,11 +174,21 @@ void setup()
   lcd0.print("Lon:");
 
   lcd1.setCursor(0, 0);
-  lcd1.print("Voltage:");
+  lcd1.print("Hdng:");
+  lcd1.setCursor(11, 0);
+  lcd1.print("Accl:");
   lcd1.setCursor(0, 1);
-  lcd1.print("Angle:");
+  lcd1.print("Baro:");
+  lcd1.setCursor(11, 1);
+  lcd1.print("Side:");
+  lcd1.setCursor(11, 2);
+  lcd1.print("UpDn:");
   lcd1.setCursor(0, 2);
-  lcd1.print("Geoid:");
+  lcd1.print("Inlt:");
+  lcd1.setCursor(0, 3);
+  lcd1.print("Ext:");
+  lcd1.setCursor(11, 3);
+  lcd1.print("APot:");
 }
 
 void loop()
@@ -175,6 +218,23 @@ void loop()
   potReading = analogRead(potPin);
   volts = 3.3 + (potReading * slope);
 
+  //Get Accel/Mag sensor data
+  sensors_event_t event; 
+  accel.getEvent(&event);
+  mag.getEvent(&event);
+  accelX = event.acceleration.x;
+  accelY = event.acceleration.y;
+  accelZ = event.acceleration.z;
+  heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
+  if (heading < 0)
+    {
+      heading = 360 + heading;
+    }
+
+  //Get Barometer Data
+  getBarometer();
+  
+  //duh
   getTemps();
   
   if (UNITS)
@@ -295,12 +355,22 @@ void displayLcd0()
 
 void displayLcd1()
   {
-    lcd1.setCursor(8, 0);
-    lcd1.print(volts);
-    lcd1.setCursor(8, 1);
-    lcd1.print(GPS.angle);
-    lcd1.setCursor(8, 2);
-    lcd1.print(GPS.geoidheight);
+    lcd1.setCursor(5, 0);
+    lcd1.print(heading, 1);
+//    lcd1.setCursor(16, 0);
+//    lcd1.print(accelX, 1);
+    lcd1.setCursor(5, 1);
+    lcd1.print(presB, 1);
+//    lcd1.setCursor(16, 1);
+//    lcd1.print(accelY, 1);
+    lcd1.setCursor(5, 2);
+    lcd1.print(tempProbe0, 1);
+//    lcd1.setCursor(16, 2);
+//    lcd1.print(accelZ, 1);
+    lcd1.setCursor(5, 3);
+    lcd1.print(tempProbe1, 1);
+    lcd1.setCursor(16, 3);
+    lcd1.print(volts, 1);
   }
 
 void print7Seg()
@@ -336,7 +406,7 @@ void writeToSerial()
           }  
         else
         {
-          Serial.print(",,,,,,,,,,");
+          Serial.print(",,,,,,,,");
         }
       Serial.print(tempProbe0); Serial.print(",");
       Serial.print(tempProbe1); //Serial.print(",");
@@ -500,3 +570,13 @@ bool isDST()
       return 0;
     }
 }
+
+void getBarometer()
+  {
+   pascals = baro.getPressure();
+   presB = (pascals/3377); //in inches Hg
+   altB = baro.getAltitude();
+   tempB = baro.getTemperature();
+    
+  }
+

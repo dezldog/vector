@@ -7,36 +7,7 @@
 #include "Adafruit_LEDBackpack.h"
 #include "Adafruit_GPS.h"
 #include "Adafruit_LiquidCrystal.h"
-#include "DHT.h"
-//#include "SPI.h"
-//#include "Adafruit_GFX.h"
-//#include "Adafruit_RA8875.h"
-//#include "Fonts/FreeSans24pt7b.h"
 
-//Stuff for the DHTs
-float h0, t0, f0;
-float h1, t1, f1;
-float hif0, hic0;
-float hif1, hic1;
-#define DHTPIN0 22     // what pins DHTs are connected to
-#define DHTPIN1 23
-#define DHTTYPE DHT11   // We are using DHT11s
-#define PROBE_0 "Outside"  // Let's name the DHT probes
-#define PROBE_1 "Inside"
-DHT dht0(DHTPIN0, DHTTYPE); // Initialize DHT sensors
-DHT dht1(DHTPIN1, DHTTYPE);
-
-// Needed for Adafruit RA8875 communication
-// Library only supports hardware SPI at this time
-// Connect SCLK to DUE SPI 3 (Hardware SPI clock)
-// Connect MISO to DUE SPI 1 (Hardware SPI MISO)
-// Connect MOSI to DUE SPI 4 (Hardware SPI MOSI)
-//#define RA8875_INT 51
-//#define RA8875_CS 52
-//#define RA8875_RESET 53
-//
-//Adafruit_RA8875 tft = Adafruit_RA8875(RA8875_CS, RA8875_RESET);
-//uint16_t tx, ty;
 
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences.
@@ -60,12 +31,19 @@ float volts = 0;
 //GMT = 0, PST = -8, PDT = -7
 #define HOUR_OFFSET -8
 
+// Is it DST?
+#define DST 0
+const int dstPin = 9;
+int dstON = 0;
+
+int displayValue = 0;
+
 //24 or 12hr time?
 #define TIME_24_HOUR   false
 
 // Format serial output for humans or computers
 // Humans = 0 computers = 1
-#define serialFormat  0
+#define serialFormat  1
 
 // Create LCD object
 Adafruit_LiquidCrystal lcd0(0);
@@ -75,9 +53,8 @@ Adafruit_LiquidCrystal lcd1(1);
 Adafruit_7segment matrix0 = Adafruit_7segment();
 Adafruit_7segment matrix1 = Adafruit_7segment();
 
-#define gpsSerial Serial1
-
-Adafruit_GPS GPS(&gpsSerial);
+//#define SERIALPORT   (Serial)
+Adafruit_GPS GPS(&Serial1);
 
 // Variables for formatting
 int hours = 0;
@@ -92,44 +69,44 @@ float heading;
 uint32_t timer = millis();
 int GPSBaud = 9600;
 
+//Stuff for Temperature probes
+// which pins are we using?
+#define THERM0 A1
+#define THERM1 A2
+// RTD Type and Ref Temp
+#define THERM_OHMS 10000
+#define THERM_TEMP 25
+// Sample for noise reduction
+#define THERM_SAMP 5
+// The beta coefficient of the thermistor
+#define BCOEFFICIENT 3950
+// the value of the voltage dividing resistor
+#define SERIESRESISTOR 10000
+// The actual variables
+float tempProbe0;
+float tempProbe1;
+
 void setup()
 {
   // Start gps
   Serial.begin(115200);
   GPS.begin(GPSBaud);
-  gpsSerial.begin (GPSBaud);
+  Serial1.begin (GPSBaud);
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
-  GPS.sendCommand(PGCMD_ANTENNA);  
+  GPS.sendCommand(PGCMD_ANTENNA);
+
+  // for temperature measurement stability
+  // likely not necessary for my circuit
+  //analogReference(EXTERNAL);
+  
+  //DST button
+  pinMode(dstPin, INPUT);
 
   //Start 7 segment displays
   matrix0.begin(0x70);
   matrix1.begin(0x71);
-
-/*
-//  Initialise the sensor, make sure it is there
-  if(!mag.begin())
-    {
-       Serial.println("LSM303 not detected");
-       while(1);
-    }
-*/
-/*  
-  //Start Graphic LCD
-  Serial.println("RA8875 start");
-
-  if (!tft.begin(RA8875_800x480)) {
-    Serial.println("RA8875 Not Found!");
-    while (1);
-  }
-
-  tft.displayOn(true);
-  tft.GPIOX(true);      // Enable TFT - display enable tied to GPIOX
-  tft.PWM1config(true, RA8875_PWM_CLK_DIV1024); // PWM output for backlight
-  tft.PWM1out(255);
-  tft.fillScreen(0x024B);
-  tft.textMode(); //Switch to text - keep it simple for now  
-*/  
+  
   //Start TXT LCDs
   lcd0.begin(16, 4);
   lcd1.begin(16, 4);
@@ -139,7 +116,7 @@ void setup()
   lcd0.setCursor(0, 1);
   lcd0.print("Start-Up Complete");
   lcd0.setCursor(0, 2);
-  lcd0.print("Version 19FEB16.1");
+  lcd0.print("Version -spectre-");
   lcd0.setCursor(0, 3);
   for (int x = 0; x < 20; x++)
   {
@@ -197,6 +174,8 @@ void loop()
   //Read and calculate Volts from potentiometer a/d value
   potReading = analogRead(potPin);
   volts = 3.3 + (potReading * slope);
+
+  getTemps();
   
   if (UNITS)
     {
@@ -208,27 +187,6 @@ void loop()
       velocity = GPS.speed;
       elevation = GPS.altitude;  
     }
-
-  get_dhtData();
-
-/*  
-  //Get sensor event 
-  sensors_event_t event; 
-  mag.getEvent(&event);
-  
-  float Pi = 3.14159;
-  
-  // Calculate the angle of the vector y,x
-  float heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
-  
-  // Normalize to 0-360
-  if (heading < 0)
-    {
-      heading = 360 + heading;
-    }
-*/
-   //Write to Graphic LCD
-   //displayGraphic();
 
    //Write to the TXT LCDs
    displayLcd0();
@@ -378,18 +336,10 @@ void writeToSerial()
           }  
         else
         {
-          Serial.print(",,,,,,,,");
+          Serial.print(",,,,,,,,,,");
         }
-      Serial.print(h0); Serial.print(","); 
-      Serial.print(t0); Serial.print(","); 
-      Serial.print(f0); Serial.print(",");
-      Serial.print(hic0); Serial.print(","); 
-      Serial.print(hif0); Serial.print(",");
-      Serial.print(h1); Serial.print(","); 
-      Serial.print(t1); Serial.print(","); 
-      Serial.print(f1); Serial.print(",");
-      Serial.print(hic1); Serial.print(",");
-      Serial.print(hif1);
+      Serial.print(tempProbe0); Serial.print(",");
+      Serial.print(tempProbe1); //Serial.print(",");
       Serial.println();
  
       }
@@ -420,17 +370,11 @@ void writeToSerial()
             Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
             Serial.print("Angle: ");Serial.println(GPS.angle);
             Serial.print("Geoid Height: ");Serial.println(GPS.geoidheight);
-            Serial.print("Voltage: ");Serial.println(volts);
           }
-    Serial.print(PROBE_0",Humidity,"); Serial.print(h0); Serial.println("%"); 
-    Serial.print("Temp,"); Serial.print(t0); Serial.print("C, "); Serial.print(f0);Serial.println("F");
-    Serial.print("Heat Index,"), Serial.print(hic0); Serial.print("C, "); Serial.print(hif0); Serial.println("F");
-    Serial.println();
-    Serial.print(PROBE_1",Humidity,"); Serial.print(h1); Serial.println("%");
-    Serial.print("Temp,"); Serial.print(t1); Serial.print("C, "); Serial.print(f1);Serial.println("F");
-    Serial.print("Heat Index,"), Serial.print(hic1); Serial.print("C, "); Serial.print(hif1); Serial.println("F");
-    Serial.println();
-    Serial.println();
+      Serial.print("Voltage: ");Serial.println(volts);
+      Serial.print("Temperature A:  "); Serial.print(tempProbe0); Serial.println(" *C");
+      Serial.print("Temperature B:  "); Serial.print(tempProbe1); Serial.println(" *C");
+      Serial.println();
     }
   }
 
@@ -450,7 +394,16 @@ void displayTime()
     
   int minutes = GPS.minute;
   int seconds = GPS.seconds;
-  int displayValue = hours*100 + minutes;
+  
+  if (isDST())
+    {
+     displayValue = (hours + 1)*100 + minutes;
+      
+    }
+  else
+    {
+      displayValue = hours*100 + minutes;
+    }
 
   // Do 24 hour to 12 hour format conversion when required.
   if (!TIME_24_HOUR) {
@@ -489,124 +442,61 @@ void displayTime()
   matrix1.writeDisplay();
 }
 
-void get_dhtData()
+void getTemps()
   {
-    //Process DHT data
-    h0 = dht0.readHumidity();
-    t0 = dht0.readTemperature();
-    f0 = dht0.readTemperature(true);
+  uint8_t i;
+  int samples0[THERM_SAMP];
+  int samples1[THERM_SAMP];
+  float thermAverage0 = 0;
+  float thermAverage1 = 0;
 
-    h1 = dht1.readHumidity();
-    t1 = dht1.readTemperature();
-    f1 = dht1.readTemperature(true);
-
-
-  // Check if any reads failed and exit early (to try again).
-    if (isnan(h0) || isnan(t0) || isnan(f0)) {
-      Serial.println("Failed to read from DHT0 sensor!");
-  }
-  if (isnan(h1) || isnan(t1) || isnan(f1)) {
-    Serial.println("Failed to read from DHT1 sensor!");
+  // take N samples in a row, with a slight delay
+  for (i=0; i< THERM_SAMP; i++) {
+    samples0[i] = analogRead(THERM0);
+    samples1[i] = analogRead(THERM1);
+    delay(10);
   }
 
-  hif0 = dht0.computeHeatIndex(f0, h0);    // Compute heat index in Fahrenheit (the default)
-  hic0 = dht0.computeHeatIndex(t0, h0, false);  // Compute heat index in Celsius (isFahreheit = false)
-
-  hif1 = dht1.computeHeatIndex(f1, h1);
-  hic1 = dht1.computeHeatIndex(t1, h1, false);
-
+  // average all the samples out
+  for (i=0; i< THERM_SAMP; i++) {
+     thermAverage0 += samples0[i];
+     thermAverage1 += samples1[i];
   }
-/*
-void displayGraphic()
-  {
-    //The clock calculation bit
-    int hours = GPS.hour + HOUR_OFFSET;
-    int minutes = GPS.minute;
-    int seconds = GPS.seconds;
-    float Longitude = GPS.longitudeDegrees;
-    float Latitude = GPS.latitudeDegrees;
+  thermAverage0 /= THERM_SAMP;
+  thermAverage1 /= THERM_SAMP;
 
-    if (hours < 0) 
-      {
-        hours = 24+hours;
-      }
-    if (hours > 23) 
-      {
-        hours = 24-hours;
-      }
 
-    if (!TIME_24_HOUR) {
-      if (hours > 12) {
-        hours -= 12;
-        }
-      else if (hours == 0) {
-        hours += 12;
-        }
-      }  
+  // convert the value to resistance
+  thermAverage0 = 1023 / thermAverage0 - 1;
+  thermAverage1 = 1023 / thermAverage1 - 1;
+  thermAverage0 = SERIESRESISTOR / thermAverage0;
+  thermAverage1 = SERIESRESISTOR / thermAverage1;
 
-    //The display bit
-    int months = GPS.month;
-    int days = GPS.day;
-    int years = GPS.year;
-    int satellite = GPS.satellites;
-    int fix = GPS.fix;
-    char time_buff[32];
-    char velo_buff[6];
-    char elev_buff[6];
-    char loc_buff[32];
-    char date_buff[10];
-    char sat_buff[3];
-    char fix_buff[4];
-    
-    tft.fillScreen(0x024B); // darker cyan
-    tft.setFont(&FreeSans24pt7b);
-    tft.textEnlarge(1); 
+  tempProbe0 = thermAverage0 / THERM_OHMS;
+  tempProbe0 = log(tempProbe0);
+  tempProbe0 /= BCOEFFICIENT;
+  tempProbe0 += 1.0 / (THERM_TEMP + 273.15);
+  tempProbe0 = 1.0 / tempProbe0;
+  tempProbe0 -= 273.15;
 
-    tft.textSetCursor(660, 10); 
-    tft.textTransparent(0x373B); //funny green
-    sprintf( time_buff, "%02d:%02d:%02d", hours, minutes, seconds);
-    tft.textWrite( time_buff );
+  tempProbe1 = thermAverage1 / THERM_OHMS;
+  tempProbe1 = log(tempProbe1);
+  tempProbe1 /= BCOEFFICIENT;
+  tempProbe1 += 1.0 / (THERM_TEMP + 273.15);
+  tempProbe1 = 1.0 / tempProbe1;
+  tempProbe1 -= 273.15;
 
-    tft.textSetCursor(10,10);
-    tft.textTransparent(0x373B); //funny green
-    sprintf( date_buff, "%02d/%02d/%02d", months, days, years);
-    tft.textWrite( date_buff );
+}
 
-    tft.textSetCursor(400, 200);
-    tft.textTransparent(0xF4E1); //orange
-    tft.textEnlarge(6);
-    sprintf(velo_buff, "%.1f Mph", velocity);
-    tft.textWrite(velo_buff);
-
-    tft.textSetCursor(10, 360);
-    tft.textEnlarge(1);
-    tft.textTransparent(0xF81F); //magenta
-    sprintf(elev_buff, "Altitude %.1f ft", elevation);
-    tft.textWrite(elev_buff);
-
-    tft.textSetCursor(240, 420);
-    tft.textTransparent(0xF81F); //magenta
-    sprintf(sat_buff, "%02d satellites Available", satellite);
-    tft.textWrite(sat_buff);
-
-    tft.textSetCursor(10, 420);
-    if (fix)  //Sets color for FIX as well...
-      {
-        tft.textTransparent(RA8875_GREEN);
-        sprintf(fix_buff, "GPS FIX", fix);
-      }
-    else
-      {
-        tft.textTransparent(RA8875_RED);
-        sprintf(fix_buff, "GPS NO FIX", fix);
-      }
-    tft.textWrite(fix_buff);
-
-    //The Lat and Lon and FIX
-    tft.textSetCursor(10, 390);
-    tft.textEnlarge(1);
-    sprintf( loc_buff,"Lat:%f      Lon:%f", Latitude,Longitude );
-    tft.textWrite (loc_buff);
-  }
-*/
-
+bool isDST()
+{
+  dstON = digitalRead(dstPin);
+  if (dstON == HIGH)
+    {
+      return 1;
+    } 
+  else
+    {
+      return 0;
+    }
+}
