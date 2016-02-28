@@ -162,20 +162,22 @@ void setup()
 
   lcd1.setCursor(0, 0);
   lcd1.print("Hdng:");
-  lcd1.setCursor(11, 0);
-  lcd1.print("Accl:");
+  lcd1.setCursor(8,0);
+  lcd1.print((char)223);
+  lcd1.setCursor(10, 0);
+  lcd1.print("Vpot:");
   lcd1.setCursor(0, 1);
   lcd1.print("Baro:");
-  lcd1.setCursor(11, 1);
+  lcd1.setCursor(10, 1);
+  lcd1.print("Accl:");
+  lcd1.setCursor(10, 2);
   lcd1.print("Side:");
-  lcd1.setCursor(11, 2);
-  lcd1.print("UpDn:");
   lcd1.setCursor(0, 2);
   lcd1.print("Inlt:");
   lcd1.setCursor(0, 3);
-  lcd1.print("Ext:");
-  lcd1.setCursor(11, 3);
-  lcd1.print("VPot:");
+  lcd1.print("Ambt:");
+  lcd1.setCursor(10, 3);
+  lcd1.print("UpDn:");
   
 }
 
@@ -337,21 +339,21 @@ void displayLcd0()
 void displayLcd1()
   {
     lcd1.setCursor(5, 0);
-    lcd1.print(heading, 1);
-    lcd1.setCursor(16, 0);
-    //lcd1.print(accelX, 1);
+    lcd1.print(heading, 0);
+    lcd1.setCursor(15, 0);
+    lcd1.print(volts, 2);
     lcd1.setCursor(5, 1);
     lcd1.print(presB, 1);
-    lcd1.setCursor(16, 1);
-    //lcd1.print(accelY, 1);
+    lcd1.setCursor(15, 1);
+    lcd1.print(accelX, 1);
     lcd1.setCursor(5, 2);
     lcd1.print(tempProbe0, 1);
-    lcd1.setCursor(16, 2);
-    //lcd1.print(accelZ, 1);
+    lcd1.setCursor(15, 2);
+    lcd1.print(accelY, 1);
     lcd1.setCursor(5, 3);
     lcd1.print(tempProbe1, 1);
-    lcd1.setCursor(16, 3);
-    lcd1.print(volts, 1);
+    lcd1.setCursor(15, 3);
+    lcd1.print(accelZ, 1);
   }
 
 void displaySpeed()
@@ -436,16 +438,19 @@ void writeToSerial()
             Serial.print(GPS.speed); Serial.print(",");
             Serial.print(GPS.altitude); Serial.print(",");
             Serial.print((int)GPS.satellites); Serial.print(",");
-            Serial.print(GPS.angle); Serial.print(",");
-            Serial.print(GPS.geoidheight); Serial.print(",");
-            Serial.print(volts); Serial.print(",");
           }  
         else
         {
           Serial.print(",,,,,,,,");
         }
+      Serial.print(volts); Serial.print(",");
       Serial.print(tempProbe0); Serial.print(",");
-      Serial.print(tempProbe1); //Serial.print(",");
+      Serial.print(tempProbe1); Serial.print(",");
+      Serial.print(heading); Serial.print(",");
+      Serial.print(pressure); Serial.print(",");
+      Serial.print(accelX); Serial.print(",");
+      Serial.print(accelY); Serial.print(",");
+      Serial.print(accelZ); //Serial.print(",");
       Serial.println();
  
       }
@@ -477,9 +482,14 @@ void writeToSerial()
             Serial.print("Angle: ");Serial.println(GPS.angle);
             Serial.print("Geoid Height: ");Serial.println(GPS.geoidheight);
           }
-      Serial.print("Voltage: ");Serial.println(volts);
-      Serial.print("Temperature A:  "); Serial.print(tempProbe0); Serial.println(" *C");
-      Serial.print("Temperature B:  "); Serial.print(tempProbe1); Serial.println(" *C");
+      Serial.print("vPotentiometer: ");Serial.println(volts);Serial.print("Volts");
+      Serial.print("Inlet Temp:  "); Serial.print(tempProbe0); Serial.println(" *C");
+      Serial.print("Ambient Temp:  "); Serial.print(tempProbe1); Serial.println(" *C");
+      Serial.print("Heading: ");Serial.print(heading); Serial.print("*");
+      Serial.print("Pressure: ");Serial.print(pressure); Serial.print("inHg");
+      Serial.print("Acceleration: ");Serial.print(accelX); Serial.print("g");
+      Serial.print("Lateral Acceleration: ");Serial.print(accelY); Serial.print("g");
+      Serial.print("Vertical Acceleration: ");Serial.print(accelZ); Serial.print("g");      
       Serial.println();
     }
   }
