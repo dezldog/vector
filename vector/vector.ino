@@ -1,7 +1,7 @@
 // dezldog cobbled and glued this together
-// Playing with my gps and LCD
-// some code mine, some code borrowed from Adafruit.
-// buy your stuff from them - their tutorials in information are priceless
+// This eventually will be a dashboard for an electri car or off road vehicle.
+// Some code mine, some code borrowed from Adafruit, probably some borrowed from others
+// Buy your stuff from Adafruit - their tutorials and information are priceless
 
 #include "Wire.h"
 #include "Adafruit_LEDBackpack.h"
@@ -11,13 +11,12 @@
 #include "Adafruit_LSM303_U.h"
 #include "Adafruit_MPL3115A2.h"
 
-// Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
-// Set to 'true' if you want to debug and listen to the raw GPS sentences.
-#define GPSECHO  false
+#define GPSECHO   false     //for debugging from GPS before codes
+const int GPSBaud = 9600;
 
 //define potentiometer input/variable
-#define   potPin A0     // the potentiometer is connected to a1
-float potReading;     // the analog reading from the potentiometer
+#define   potPin A0         // the potentiometer is connected to A0
+float potReading;           // the analog reading from the potentiometer
 
 //calibrate a/d for potentiometer
 float yIntercept = 646.00;
@@ -29,16 +28,16 @@ float volts = 0;
 //metric = 0, imperial = 1
 #define UNITS 1
 
-//What timezone to display?
-//GMT = 0, PST = -8, PDT = -7
+//What timezone to display (in Standard time)?
+//GMT = 0, PST = -8
 #define HOUR_OFFSET -8
 
 // Is it DST?
 #define DST 0
-const int dstPin = 9;
+const int dstPin = 13;
 int dstON = 0;
 
-int displayValue = 0;
+int displayDSTValue = 0;
 
 //24 or 12hr time?
 #define TIME_24_HOUR   false
@@ -55,7 +54,7 @@ Adafruit_LiquidCrystal lcd1(1);
 Adafruit_7segment matrix0 = Adafruit_7segment();
 Adafruit_7segment matrix1 = Adafruit_7segment();
 
-//#define SERIALPORT   (Serial)
+//Set up GPS
 Adafruit_GPS GPS(&Serial1);
 
 int hours = 0;
@@ -75,35 +74,24 @@ float tempB;
 float pressure;
 float presB;
 
-//Other variables
-uint32_t timer = millis();
-int GPSBaud = 9600;
-
 //Stuff for Temperature probes
-// which pins are we using?
-#define THERM0 A1
-#define THERM1 A2
-// RTD Type and Ref Temp
-#define THERM_OHMS 10000
-#define THERM_TEMP 25
-// Sample for noise reduction
-#define THERM_SAMP 5
-// The beta coefficient of the thermistor
-#define BCOEFFICIENT 3950
-// the value of the voltage dividing resistor
-#define SERIESRESISTOR 10000
-// The actual variables
-float tempProbe0;
-float tempProbe1;
+#define THERM0 A1               //Where is the first RTD connected?
+#define THERM1 A2               //Where is the second RTD connected?
+#define THERM_OHMS 10000        // RTD Type
+#define THERM_TEMP 25           // RTD Ref Temp
+#define THERM_SAMP 5            // Samples to average
+#define BCOEFFICIENT 3950       // The beta coefficient of the thermistor
+#define SERIESRESISTOR 10000    // the value of the voltage dividing resistor
+float tempProbe0;               // The actual variables
+float tempProbe1;               
 
-//stuff for accelerometer/magnetic sensor/barometer
+//Set up accelerometer/magnetic sensor/barometer sensors
 Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(54321);
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
 Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
 
 
-
-
+////////////////////////////////////////////////////
 void setup()
 {
   // Start gps
@@ -119,18 +107,15 @@ void setup()
   //analogReference(EXTERNAL);
 
   // Start accelerometer/magnetometer
-  // Enable auto-gain
-  mag.enableAutoRange(true);
   if(!accel.begin() || !mag.begin())
   {
     Serial.println("LSM303 not detected");
-    while(1);
   }
+  mag.enableAutoRange(true);            // Enable AGC
 
-  //Barometer
+  //Start Barometer
   if (! baro.begin()) {
     Serial.println("Couldnt find Barometer");
-    return;
   }
   
   //DST button
@@ -141,22 +126,22 @@ void setup()
   matrix1.begin(0x71);
   
   //Start TXT LCDs
-  lcd0.begin(16, 4);
-  lcd1.begin(16, 4);
+  lcd0.begin(20, 4);
+  lcd1.begin(20, 4);
 
   //Print a fun message
   lcd0.print("Welcome to Dezldog");
   lcd0.setCursor(0, 1);
-  lcd0.print("Start-Up Complete");
+  lcd0.print("Starting Up, Yo!");
   lcd0.setCursor(0, 2);
   lcd0.print("Version -spectre-");
   lcd0.setCursor(0, 3);
   for (int x = 0; x < 20; x++)
   {
     lcd0.setCursor(x, 3);
-    lcd0.print("0");
-    delay(200);
-    lcd0.setCursor(x - 1, 3);
+    lcd0.print("->");
+    delay(150);
+    lcd0.setCursor(x - 2, 3);
     lcd0.print(" ");
   }
   lcd0.clear();
@@ -188,49 +173,39 @@ void setup()
   lcd1.setCursor(0, 3);
   lcd1.print("Ext:");
   lcd1.setCursor(11, 3);
-  lcd1.print("APot:");
+  lcd1.print("VPot:");
 }
 
+
+////////////////////////////////////////////////////
 void loop()
 {
- 
-    char c = GPS.read();
+  uint32_t timer = millis();
+  char c = GPS.read();
     
-    // if you want to debug, this is a good time to do it!
-    if (GPSECHO)
-      if (c) Serial.print(c);
- 
+  if (GPSECHO)                    //Print straight from GPS before codes
+    if (c) Serial.print(c);
+    
   if (GPS.newNMEAreceived())
     {
-    if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
-      return;  // we can fail to parse a sentence in which case we should just wait for another
-    }
+      if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
+        return;                         // if we fail to parse a sentence, just wait for another
+     }
+   
+  if (timer > millis())  timer = millis();  // if millis() or timer wraps around, reset it
 
-  // if millis() or timer wraps around, we'll just reset it
-  if (timer > millis())  timer = millis();
-
-  // approximately every 1 seconds or so, print out the current stats
-  if (millis() - timer > 1000)
+  if (millis() - timer > 1000)    // ~ every 1 seconds, print out the current stats
     {
-    timer = millis(); // reset the timer
-
+      timer = millis(); // reset the timer
+    }
+  
   //Read and calculate Volts from potentiometer a/d value
   potReading = analogRead(potPin);
   volts = 3.3 + (potReading * slope);
 
   //Get Accel/Mag sensor data
-  sensors_event_t event; 
-  accel.getEvent(&event);
-  mag.getEvent(&event);
-  accelX = event.acceleration.x;
-  accelY = event.acceleration.y;
-  accelZ = event.acceleration.z;
-  heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
-  if (heading < 0)
-    {
-      heading = 360 + heading;
-    }
-
+  getAccelMag();
+  
   //Get Barometer Data
   getBarometer();
   
@@ -247,20 +222,21 @@ void loop()
       velocity = GPS.speed;
       elevation = GPS.altitude;  
     }
-
-   //Write to the TXT LCDs
-   displayLcd0();
-   displayLcd1();
+  
+  //Write to the TXT LCDs
+  displayLcd0();
+  displayLcd1();
     
-   //Send serial
-   writeToSerial();
+  //Send serial
+  writeToSerial();
 
-   //Send to 7 Segment displays
-   print7Seg();
-   displayTime();
-   }
+  //Send to 7 Segment displays
+  displaySpeed();
+  displayTime();
 }
 
+
+////////////////////////////////////////////////////
 void displayLcd0()
 {
   //Where to we print the date?
@@ -308,13 +284,12 @@ void displayLcd0()
   lcd0.print("UTC");
 
   //Show the velocity
-  //velocity = GPS.speed; Set up earlier now
   lcd0.setCursor(2, 1);
   if (velocity < 10 )
     {
     lcd0.print("0");
     }
-  lcd0.print(velocity);
+  lcd0.print(velocity, 1);
 
   //Show Altitude
   lcd0.setCursor(14, 1);
@@ -373,17 +348,72 @@ void displayLcd1()
     lcd1.print(volts, 1);
   }
 
-void print7Seg()
+void displaySpeed()
   {
     matrix0.print(velocity);
     matrix0.writeDisplay();
   }
 
+void displayTime()     //Display pretty-ified time to one of the 7 seg displays
+  {
+   int hours = GPS.hour + HOUR_OFFSET;
+ 
+  if (hours < 0) 
+    {
+      hours = 24+hours;
+    }
+  if (hours > 23) 
+    {
+      hours = 24-hours;
+    }
+    
+  int minutes = GPS.minute;
+  int seconds = GPS.seconds;
+  
+  if (isDST())
+    {
+     displayDSTValue = (hours + 1)*100 + minutes;
+      
+    }
+  else
+    {
+      displayDSTValue = hours*100 + minutes;
+    }
+
+  if (!TIME_24_HOUR) {
+    if (hours > 12) {
+      displayDSTValue -= 1200;
+    }
+    // Handle hour 0 (midnight) being shown as 12.
+    else if (hours == 0) {
+      displayDSTValue += 1200;
+    }
+  }
+
+  // Now print the time value to the display.
+  matrix1.print(displayDSTValue, DEC);
+
+  if (TIME_24_HOUR && hours == 0) {
+    // Pad hour 0.
+    matrix1.writeDigitNum(1, 0);
+    // Also pad when the 10's minute is 0 and should be padded.
+    if (minutes < 10) {
+      matrix1.writeDigitNum(2, 0);
+    }
+  }
+
+  // Blink the colon
+  matrix1.drawColon(seconds % 2 == 0);
+
+  // Now push out to the display the new values that were set above.
+  matrix1.writeDisplay();
+}
+
 void writeToSerial()
   {
     if (serialFormat)
       {
-      // The format is
+      // The format is:
       // hr,min,sec,day,mon,yr,fix,fixqual,lat,long,speed,altitude,satellites,angle,geoidheight,voltage
       Serial.print(GPS.hour, DEC); Serial.print(',');
       Serial.print(GPS.minute, DEC); Serial.print(',');
@@ -448,70 +478,6 @@ void writeToSerial()
     }
   }
 
-//Display pretty-ified time to one of the 7 seg displays
-void displayTime()
-  {
-   int hours = GPS.hour + HOUR_OFFSET;
- 
-  if (hours < 0) 
-    {
-      hours = 24+hours;
-    }
-  if (hours > 23) 
-    {
-      hours = 24-hours;
-    }
-    
-  int minutes = GPS.minute;
-  int seconds = GPS.seconds;
-  
-  if (isDST())
-    {
-     displayValue = (hours + 1)*100 + minutes;
-      
-    }
-  else
-    {
-      displayValue = hours*100 + minutes;
-    }
-
-  // Do 24 hour to 12 hour format conversion when required.
-  if (!TIME_24_HOUR) {
-    // Handle when hours are past 12 by subtracting 12 hours (1200 value).
-    if (hours > 12) {
-      displayValue -= 1200;
-    }
-    // Handle hour 0 (midnight) being shown as 12.
-    else if (hours == 0) {
-      displayValue += 1200;
-    }
-  }
-
-  // Now print the time value to the display.
-  matrix1.print(displayValue, DEC);
-
-  // Add zero padding when in 24 hour mode and it's midnight.
-  // In this case the print function above won't have leading 0's
-  // which can look confusing.  Go in and explicitly add these zeros.
-  if (TIME_24_HOUR && hours == 0) {
-    // Pad hour 0.
-    matrix1.writeDigitNum(1, 0);
-    // Also pad when the 10's minute is 0 and should be padded.
-    if (minutes < 10) {
-      matrix1.writeDigitNum(2, 0);
-    }
-  }
-
-  // Blink the colon by turning it on every even second and off
-  // every odd second.  The modulus operator is very handy here to
-  // check if a value is even (modulus 2 equals 0) or odd (modulus 2
-  // equals 1).
-  matrix1.drawColon(seconds % 2 == 0);
-
-  // Now push out to the display the new values that were set above.
-  matrix1.writeDisplay();
-}
-
 void getTemps()
   {
   uint8_t i;
@@ -575,8 +541,22 @@ void getBarometer()
   {
    pascals = baro.getPressure();
    presB = (pascals/3377); //in inches Hg
-   altB = baro.getAltitude();
-   tempB = baro.getTemperature();
-    
+   //altB = baro.getAltitude();
+   //tempB = baro.getTemperature();
+  }
+
+void getAccelMag()
+  {
+    sensors_event_t event; 
+    accel.getEvent(&event);
+    mag.getEvent(&event);
+    accelX = event.acceleration.x;
+    accelY = event.acceleration.y;
+    accelZ = event.acceleration.z;
+    heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
+    if (heading < 0)
+      {
+        heading = 360 + heading;
+      }
   }
 
