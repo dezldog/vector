@@ -1,6 +1,6 @@
 // dezldog cobbled and glued this together
-// This eventually will be a dashboard for an electri car or off road vehicle.
-// Some code mine, some code borrowed from Adafruit, probably some borrowed from others
+// This eventually will be a dashboard for an electric car or off road vehicle.
+// Some of the code is mine, some code borrowed from Adafruit, probably some borrowed from others
 // Buy your stuff from Adafruit - their tutorials and information are priceless
 
 #include "Wire.h"
