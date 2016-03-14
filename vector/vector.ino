@@ -1,6 +1,6 @@
 // dezldog cobbled and glued this together
 // This eventually will be a dashboard for an electric car or off road vehicle.
-// Some of the code is mine, some code borrowed from Adafruit, probably some borrowed from others
+// Some of the code is mine, some code borrowed from Adafruit, probably some borrowed from others, please share away!
 // Buy your stuff from Adafruit - their tutorials and information are priceless
 
 #include "Wire.h"
@@ -186,11 +186,11 @@ void setup()
 void loop()
 {
  
-    char c = GPS.read();
+  char c = GPS.read();
     
-    // if you want to debug, this is a good time to do it!
-    if (GPSECHO)
-      if (c) Serial.print(c);
+  // if you want to debug, this is a good time to do it!
+  if (GPSECHO)
+    if (c) Serial.print(c);
  
   if (GPS.newNMEAreceived())
     {
@@ -378,16 +378,8 @@ void displayTime()     //Display pretty-ified time to one of the 7 seg displays
   int minutes = GPS.minute;
   int seconds = GPS.seconds;
   
-  if (isDST())
-    {
-     displayDSTValue = (hours + 1)*100 + minutes;
-      
-    }
-  else
-    {
-      displayDSTValue = hours*100 + minutes;
-    }
-
+  displayValue = (hours + isDST())*100 + minutes;
+  
   if (!TIME_24_HOUR) {
     if (hours > 12) {
       displayDSTValue -= 1200;
