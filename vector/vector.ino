@@ -364,7 +364,7 @@ void displaySpeed()
 
 void displayTime()     //Display pretty-ified time to one of the 7 seg displays
   {
-   int hours = GPS.hour + HOUR_OFFSET;
+   int hours = GPS.hour + HOUR_OFFSET + isDST();
 
    if (hours < 0) 
     {
@@ -378,7 +378,7 @@ void displayTime()     //Display pretty-ified time to one of the 7 seg displays
   int minutes = GPS.minute;
   int seconds = GPS.seconds;
   
-  displayValue = (hours + isDST())*100 + minutes;
+  displayValue = hours*100 + minutes;
   
   if (!TIME_24_HOUR) {
     if (hours > 12) {
@@ -532,7 +532,7 @@ void getTemps()
 
 }
 
-bool isDST()
+int isDST()
 {
   dstON = digitalRead(dstPin);
   if (dstON == HIGH)
