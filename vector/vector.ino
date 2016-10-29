@@ -3,6 +3,8 @@
 // Some of the code is mine, some code borrowed from Adafruit, probably some borrowed from others, please share away!
 // Buy your stuff from Adafruit - their tutorials and information are priceless
 
+//This is written for Arduino  Zero and similar
+
 #include "Wire.h"
 #include "Adafruit_LEDBackpack.h"
 #include "Adafruit_GPS.h"
@@ -38,7 +40,7 @@ const int dstPin = 13;
 int dstON = 0;
 
 int displayDSTValue = 0;
-
+int displayValue;
 //24 or 12hr time?
 #define TIME_24_HOUR   false
 
@@ -377,7 +379,7 @@ void displayTime()     //Display pretty-ified time to one of the 7 seg displays
     
   int minutes = GPS.minute;
   int seconds = GPS.seconds;
-  
+ 
   displayValue = hours*100 + minutes;
   
   if (!TIME_24_HOUR) {

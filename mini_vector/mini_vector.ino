@@ -3,6 +3,8 @@
 // Some of the code is mine, some code borrowed from Adafruit, probably some borrowed from others, please share away!
 // Buy your stuff from Adafruit - their tutorials and information are priceless
 
+//This is written for Arduino Uno R3 and similar
+
 #include "Wire.h"
 #include "Adafruit_LEDBackpack.h"
 #include "Adafruit_GPS.h"
@@ -54,9 +56,9 @@ Adafruit_LiquidCrystal lcd0(0);
 Adafruit_7segment matrix0 = Adafruit_7segment();
 Adafruit_7segment matrix1 = Adafruit_7segment();
 
-SoftwareSerial Serial1(8, 7);
+SoftwareSerial gpsSerial(8, 7);
 //Set up GPS
-Adafruit_GPS GPS(&Serial1);
+Adafruit_GPS GPS(&gpsSerial);
 
 int hours = 0;
 int minutes = 0;
@@ -95,11 +97,12 @@ void setup()
   // Start gps
   Serial.begin(115200);
   GPS.begin(GPSBaud);
-  Serial1.begin (GPSBaud);
+  gpsSerial.begin (GPSBaud);
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
   GPS.sendCommand(PGCMD_ANTENNA);
-
+  enableGPSInterrupt();
+  
   // for temperature measurement stability
   // likely not necessary for my circuit
   //analogReference(EXTERNAL);
@@ -165,7 +168,7 @@ void loop()
 
   // if millis() or timer wraps around, we'll just reset it
   if (timer > millis())  timer = millis();
-
+  
   // approximately every 1 seconds or so, print out the current stats
   if (millis() - timer > 1000)
     {
@@ -469,6 +472,16 @@ void getTemps()
   tempProbe1 -= 273.15;
 
 }
+
+SIGNAL(TIMER0_COMPA_vect) {
+  GPS.read();
+}
+
+void enableGPSInterrupt() {
+  OCR0A = 0xAF;
+  TIMSK0 |= _BV(OCIE0A);
+}
+
 
 int isDST()
 {
