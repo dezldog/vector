@@ -16,6 +16,9 @@
 #define GPSECHO   false     //for debugging from GPS before codes
 const int GPSBaud = 9600;
 
+#define to smooth out velocity noise from gps
+int speed = 0;
+
 //define potentiometer input/variable
 #define   potPin A0         // the potentiometer is connected to A0
 float potReading;           // the analog reading from the potentiometer
@@ -119,7 +122,7 @@ void setup()
   lcd0.begin(20, 4);
 
   //Print a fun message
-  lcd0.print("Welcome to Dezldog");
+  lcd0.print("Welcome to Dezldog!");
   lcd0.setCursor(0, 1);
   lcd0.print("Starting Up, Yo!");
   lcd0.setCursor(0, 2);
@@ -299,7 +302,9 @@ void displayLcd0()
 
 void displaySpeed()
   {
-    matrix0.print(velocity);
+    speed == velocity;
+    if (speed <= 1) speed = 0;
+    matrix0.print(speed);
     matrix0.writeDisplay();
   }
 
