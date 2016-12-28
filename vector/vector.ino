@@ -360,7 +360,9 @@ void displayLcd1()
 
 void displaySpeed()
   {
-    matrix0.print(velocity);
+    speed == velocity;
+    if (speed <= 1) speed = 0;
+    matrix0.print(speed);
     matrix0.writeDisplay();
   }
 

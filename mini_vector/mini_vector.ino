@@ -50,7 +50,7 @@ int displayValue;
 
 // Format serial output for humans or computers
 // Humans = 0 computers = 1
-#define serialFormat  1
+#define serialFormat  0
 
 // Create LCD object
 Adafruit_LiquidCrystal lcd0(0);
