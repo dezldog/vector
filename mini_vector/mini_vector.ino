@@ -302,9 +302,7 @@ void displayLcd0()
 
 void displaySpeed()
   {
-    speed == velocity;
-    if (speed <= 1) speed = 0;
-    matrix0.print(speed);
+    matrix0.print(velocity, DEC);
     matrix0.writeDisplay();
   }
 
