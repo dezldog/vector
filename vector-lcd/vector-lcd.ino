@@ -3,7 +3,7 @@
 // Some of the code is mine, some code borrowed from Adafruit, probably some borrowed from others, please share away!
 // Buy your stuff from Adafruit - their tutorials and information are priceless
 
-//This is written for Arduino  Zero and similar
+//This is written for Arduino Zero and similar
 
 #include "Wire.h"
 #include "Adafruit_LEDBackpack.h"
@@ -37,7 +37,7 @@ float volts = 0;
 // Is it DST?
 #define DST 0
 const int dstPin = 13;
-int dstON = 0;
+int dstON = 1;
 
 int displayDSTValue = 0;
 int displayValue;
@@ -50,7 +50,7 @@ int displayValue;
 
 // Create LCD object
 Adafruit_LiquidCrystal lcd0(0);
-Adafruit_LiquidCrystal lcd1(1);
+//Adafruit_LiquidCrystal lcd1(1);
 
 //Set up 7-seg displays
 Adafruit_7segment matrix0 = Adafruit_7segment();
@@ -86,7 +86,7 @@ uint32_t timer = millis();
 #define BCOEFFICIENT 3950       // The beta coefficient of the thermistor
 #define SERIESRESISTOR 10000    // the value of the voltage dividing resistor
 float tempProbe0;               // The actual variables
-float tempProbe1;
+float tempProbe1;               
 
 //Set up accelerometer/magnetic sensor/barometer sensors
 Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(54321);
@@ -111,27 +111,23 @@ void setup()
   //analogReference(EXTERNAL);
 
   // Start accelerometer/magnetometer
-  if(!accel.begin() || !mag.begin())
-  {
-    Serial.println("LSM303 not detected");
-  }
-  mag.enableAutoRange(true);            // Enable AGC
+  //accel.begin();
+  //mag.begin();
+  //mag.enableAutoRange(true);            // Enable AGC
 
   //Start Barometer
-  if (! baro.begin()) {
-    Serial.println("Couldnt find Barometer");
-  }
-
+  //baro.begin();
+  
   //DST button
   pinMode(dstPin, INPUT);
 
   //Start 7 segment displays
   matrix0.begin(0x70);
   matrix1.begin(0x71);
-
+  
   //Start TXT LCDs
   lcd0.begin(20, 4);
-  lcd1.begin(20, 4);
+  //lcd1.begin(20, 4);
 
   //Print a fun message
   lcd0.print("Welcome to Dezldog");
@@ -149,7 +145,7 @@ void setup()
     lcd0.print(" ");
   }
   lcd0.clear();
-
+  
   // Setup labels so they don't have to written every update
   lcd0.setCursor(0, 1);
   lcd0.print("V=");
@@ -161,7 +157,7 @@ void setup()
   lcd0.print("Sat:");
   lcd0.setCursor(0, 3);
   lcd0.print("Lon:");
-
+/*
   lcd1.setCursor(0, 0);
   lcd1.print("Hdng:");
   lcd1.setCursor(8,0);
@@ -180,20 +176,20 @@ void setup()
   lcd1.print("Ambt:");
   lcd1.setCursor(10, 3);
   lcd1.print("UpDn:");
-
+*/  
 }
 
 
 ////////////////////////////////////////////////////
 void loop()
 {
-
+ 
   char c = GPS.read();
-
+    
   // if you want to debug, this is a good time to do it!
   if (GPSECHO)
     if (c) Serial.print(c);
-
+ 
   if (GPS.newNMEAreceived())
     {
     if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
@@ -213,31 +209,31 @@ void loop()
   volts = 3.3 + (potReading * slope);
 
   //Get Accel/Mag sensor data
-  getAccelMag();
-
+  //getAccelMag();
+  
   //Get Barometer Data
-  getBarometer();
-
+  //getBarometer();
+  
   //duh
-  getTemps();
-
+  //getTemps();
+  
   if (UNITS)
     {
       velocity = GPS.speed * 0.621371;
-      elevation = GPS.altitude * 3.28084;
+      elevation = GPS.altitude * 3.28084;  
     }
   else
     {
       velocity = GPS.speed;
-      elevation = GPS.altitude;
+      elevation = GPS.altitude;  
     }
-
+  
   //Write to the TXT LCDs
   displayLcd0();
-  displayLcd1();
-
+  //displayLcd1();
+    
   //Send serial
-  writeToSerial();
+  //writeToSerial();
 
   //Send to 7 Segment displays
   displaySpeed();
@@ -256,7 +252,7 @@ void displayLcd0()
   lcd0.print(GPS.day);
   lcd0.print("/");
   lcd0.print(GPS.year);
-
+    
   // Where are we ging to show the time?
   lcd0.setCursor(9, 0);
   hours = GPS.hour;
@@ -321,7 +317,7 @@ void displayLcd0()
     {
     lcd0.print(sats);
     }
-
+  
   //Display Longitude
   lcd0.setCursor(4, 3);
   lcd0.print(GPS.longitudeDegrees, 6);
@@ -338,6 +334,7 @@ void displayLcd0()
     }
 }
 
+/*
 void displayLcd1()
   {
     lcd1.setCursor(5, 0);
@@ -357,37 +354,36 @@ void displayLcd1()
     lcd1.setCursor(15, 3);
     lcd1.print(accelZ, 1);
   }
+*/
 
 void displaySpeed()
-{
-  if (velocity < 10 )
   {
-  matrix0.print(0);
+    if (velocity < 10 )
+    {
+    matrix0.print(0);
+    }
+    matrix0.print(velocity,1);
+    matrix0.writeDisplay();
   }
-  matrix0.print(velocity,1);
-  matrix0.writeDisplay();
-}
-
 
 void displayTime()     //Display pretty-ified time to one of the 7 seg displays
   {
    int hours = GPS.hour + HOUR_OFFSET + isDST();
 
-   if (hours < 0)
+   if (hours < 0) 
     {
       hours = 24+hours;
     }
-   if (hours > 23)
+   if (hours > 23) 
     {
       hours = 24-hours;
     }
-
+    
   int minutes = GPS.minute;
   int seconds = GPS.seconds;
-
+ 
   displayValue = hours*100 + minutes;
   displayDSTValue = displayValue;
-
   if (!TIME_24_HOUR) {
     if (hours > 12) {
       displayDSTValue -= 1200;
@@ -399,7 +395,7 @@ void displayTime()     //Display pretty-ified time to one of the 7 seg displays
   }
 
   // Now print the time value to the display.
-  matrix1.print(displayDSTValue, DEC);
+  matrix1.print(displayDSTValue,DEC);
 
   if (TIME_24_HOUR && hours == 0) {
     // Pad hour 0.
@@ -417,6 +413,7 @@ void displayTime()     //Display pretty-ified time to one of the 7 seg displays
   matrix1.writeDisplay();
 }
 
+/*
 void writeToSerial()
   {
     if (serialFormat)
@@ -438,7 +435,7 @@ void writeToSerial()
             Serial.print(GPS.speed); Serial.print(",");
             Serial.print(GPS.altitude); Serial.print(",");
             Serial.print((int)GPS.satellites); Serial.print(",");
-          }
+          }  
         else
         {
           Serial.print(",,,,,,,,");
@@ -452,7 +449,7 @@ void writeToSerial()
       Serial.print(accelY); Serial.print(",");
       Serial.print(accelZ); //Serial.print(",");
       Serial.println();
-
+ 
       }
     else //print out human readable
       {
@@ -489,11 +486,12 @@ void writeToSerial()
       Serial.print("Pressure: ");Serial.print(pressure); Serial.print("inHg");
       Serial.print("Acceleration: ");Serial.print(accelX); Serial.print("g");
       Serial.print("Lateral Acceleration: ");Serial.print(accelY); Serial.print("g");
-      Serial.print("Vertical Acceleration: ");Serial.print(accelZ); Serial.print("g");
+      Serial.print("Vertical Acceleration: ");Serial.print(accelZ); Serial.print("g");      
       Serial.println();
     }
   }
-
+*/
+/*
 void getTemps()
   {
   uint8_t i;
@@ -539,20 +537,21 @@ void getTemps()
   tempProbe1 -= 273.15;
 
 }
-
+*/
 int isDST()
 {
   dstON = digitalRead(dstPin);
   if (dstON == HIGH)
     {
       return 1;
-    }
+    } 
   else
     {
       return 0;
     }
 }
 
+/*
 void getBarometer()
   {
    pascals = baro.getPressure();
@@ -563,7 +562,7 @@ void getBarometer()
 
 void getAccelMag()
   {
-    sensors_event_t event;
+    sensors_event_t event; 
     accel.getEvent(&event);
     mag.getEvent(&event);
     accelX = event.acceleration.x;
@@ -575,3 +574,5 @@ void getAccelMag()
         heading = 360 + heading;
       }
   }
+*/
+
