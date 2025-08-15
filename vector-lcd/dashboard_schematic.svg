@@ -1,0 +1,293 @@
+<svg width="1200" height="900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="900" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2c3e50">
+    Arduino Vehicle Dashboard Schematic
+  </text>
+  
+  <!-- Arduino Zero Main Board -->
+  <g id="arduino">
+    <rect x="450" y="350" width="300" height="200" fill="#2c5aa0" stroke="#1e3f6f" stroke-width="3" rx="10"/>
+    <text x="600" y="375" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+      Arduino Zero
+    </text>
+    
+    <!-- Pin Labels -->
+    <g fill="white" font-family="Arial, sans-serif" font-size="10">
+      <!-- Left side pins -->
+      <text x="460" y="395">VIN</text>
+      <text x="460" y="410">GND</text>
+      <text x="460" y="425">3.3V</text>
+      <text x="460" y="440">5V</text>
+      <text x="460" y="455">A0</text>
+      <text x="460" y="470">A1</text>
+      <text x="460" y="485">A2</text>
+      <text x="460" y="500">D13</text>
+      
+      <!-- Right side pins -->
+      <text x="720" y="395">SDA</text>
+      <text x="720" y="410">SCL</text>
+      <text x="720" y="425">TX1</text>
+      <text x="720" y="440">RX1</text>
+      <text x="720" y="455">GND</text>
+      <text x="720" y="470">VCC</text>
+    </g>
+  </g>
+  
+  <!-- GPS Module -->
+  <g id="gps">
+    <rect x="850" y="400" width="120" height="80" fill="#34a853" stroke="#137333" stroke-width="2" rx="5"/>
+    <text x="910" y="425" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      Adafruit GPS
+    </text>
+    <text x="910" y="440" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">
+      UART Module
+    </text>
+    
+    <!-- GPS pins -->
+    <g fill="white" font-family="Arial, sans-serif" font-size="8">
+      <text x="860" y="455">VIN</text>
+      <text x="860" y="467">GND</text>
+      <text x="925" y="455">TX</text>
+      <text x="925" y="467">RX</text>
+    </g>
+  </g>
+  
+  <!-- LCD Displays -->
+  <g id="lcd0">
+    <rect x="100" y="300" width="180" height="100" fill="#4285f4" stroke="#1967d2" stroke-width="2" rx="5"/>
+    <text x="190" y="325" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      LCD0 (20x4)
+    </text>
+    <text x="190" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">
+      I2C Address: 0x00
+    </text>
+    <text x="190" y="355" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      GPS Data Display
+    </text>
+  </g>
+  
+  <g id="lcd1">
+    <rect x="100" y="450" width="180" height="100" fill="#4285f4" stroke="#1967d2" stroke-width="2" rx="5"/>
+    <text x="190" y="475" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      LCD1 (20x4)
+    </text>
+    <text x="190" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">
+      I2C Address: 0x01
+    </text>
+    <text x="190" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      Sensor Data Display
+    </text>
+  </g>
+  
+  <!-- 7-Segment Displays -->
+  <g id="matrix0">
+    <rect x="100" y="100" width="120" height="80" fill="#ea4335" stroke="#c5221f" stroke-width="2" rx="5"/>
+    <text x="160" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      7-Seg Display
+    </text>
+    <text x="160" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">
+      Address: 0x70
+    </text>
+    <text x="160" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      Speed Display
+    </text>
+  </g>
+  
+  <g id="matrix1">
+    <rect x="250" y="100" width="120" height="80" fill="#ea4335" stroke="#c5221f" stroke-width="2" rx="5"/>
+    <text x="310" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      7-Seg Display
+    </text>
+    <text x="310" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">
+      Address: 0x71
+    </text>
+    <text x="310" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      Time Display
+    </text>
+  </g>
+  
+  <!-- Sensors -->
+  <g id="lsm303">
+    <rect x="850" y="250" width="140" height="100" fill="#ff9800" stroke="#e65100" stroke-width="2" rx="5"/>
+    <text x="920" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      LSM303 Sensor
+    </text>
+    <text x="920" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">
+      Accel + Compass
+    </text>
+    <text x="920" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      I2C Interface
+    </text>
+  </g>
+  
+  <g id="barometer">
+    <rect x="850" y="120" width="140" height="80" fill="#9c27b0" stroke="#6a1b99" stroke-width="2" rx="5"/>
+    <text x="920" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      MPL3115A2
+    </text>
+    <text x="920" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">
+      Barometer
+    </text>
+    <text x="920" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      I2C Interface
+    </text>
+  </g>
+  
+  <!-- Temperature Sensors -->
+  <g id="temp0">
+    <rect x="100" y="600" width="100" height="60" fill="#607d8b" stroke="#37474f" stroke-width="2" rx="5"/>
+    <text x="150" y="625" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">
+      Thermistor 0
+    </text>
+    <text x="150" y="640" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      Inlet Temp
+    </text>
+    <text x="150" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">
+      A1 Pin
+    </text>
+  </g>
+  
+  <g id="temp1">
+    <rect x="220" y="600" width="100" height="60" fill="#607d8b" stroke="#37474f" stroke-width="2" rx="5"/>
+    <text x="270" y="625" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">
+      Thermistor 1
+    </text>
+    <text x="270" y="640" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      Ambient Temp
+    </text>
+    <text x="270" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">
+      A2 Pin
+    </text>
+  </g>
+  
+  <!-- Potentiometer -->
+  <g id="potentiometer">
+    <rect x="100" y="700" width="120" height="60" fill="#795548" stroke="#5d4037" stroke-width="2" rx="5"/>
+    <text x="160" y="720" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">
+      Potentiometer
+    </text>
+    <text x="160" y="735" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      Voltage Input
+    </text>
+    <text x="160" y="745" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">
+      A0 Pin
+    </text>
+  </g>
+  
+  <!-- DST Button -->
+  <g id="dst_button">
+    <rect x="250" y="700" width="80" height="60" fill="#f44336" stroke="#c62828" stroke-width="2" rx="5"/>
+    <text x="290" y="720" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">
+      DST
+    </text>
+    <text x="290" y="735" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="white">
+      Button
+    </text>
+    <text x="290" y="745" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="white">
+      D13 Pin
+    </text>
+  </g>
+  
+  <!-- Connection Lines -->
+  
+  <!-- I2C Bus (SDA/SCL) -->
+  <g stroke="#ff6b35" stroke-width="3" fill="none">
+    <!-- I2C backbone -->
+    <line x1="750" y1="395" x2="820" y2="395"/>
+    <line x1="820" y1="140" x2="820" y2="500"/>
+    
+    <!-- To displays -->
+    <line x1="280" y1="350" x2="350" y2="350"/>
+    <line x1="350" y1="140" x2="350" y2="500"/>
+    <line x1="350" y1="350" x2="450" y2="350"/>
+    
+    <!-- To sensors -->
+    <line x1="820" y1="160" x2="850" y2="160"/>
+    <line x1="820" y1="300" x2="850" y2="300"/>
+  </g>
+  
+  <!-- UART GPS Connection -->
+  <g stroke="#4caf50" stroke-width="2" fill="none">
+    <line x1="750" y1="425" x2="850" y2="440"/>
+    <line x1="750" y1="440" x2="850" y2="455"/>
+  </g>
+  
+  <!-- Analog Connections -->
+  <g stroke="#2196f3" stroke-width="2" fill="none">
+    <!-- Potentiometer to A0 -->
+    <line x1="220" y1="730" x2="450" y2="455"/>
+    <!-- Thermistors to A1/A2 -->
+    <line x1="200" y1="630" x2="450" y2="470"/>
+    <line x1="270" y1="630" x2="450" y2="485"/>
+  </g>
+  
+  <!-- Digital Connection (DST Button) -->
+  <g stroke="#9c27b0" stroke-width="2" fill="none">
+    <line x1="290" y1="700" x2="450" y2="500"/>
+  </g>
+  
+  <!-- Power Lines -->
+  <g stroke="#f44336" stroke-width="2" fill="none" stroke-dasharray="5,5">
+    <!-- Power distribution lines (simplified) -->
+    <line x1="450" y1="425" x2="100" y2="425"/>
+    <line x1="750" y1="425" x2="1000" y2="425"/>
+  </g>
+  
+  <!-- Legend -->
+  <g id="legend">
+    <rect x="50" y="800" width="300" height="90" fill="white" stroke="#ccc" stroke-width="1" rx="5"/>
+    <text x="200" y="820" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">
+      Connection Legend
+    </text>
+    
+    <line x1="70" y1="835" x2="90" y2="835" stroke="#ff6b35" stroke-width="3"/>
+    <text x="100" y="840" font-family="Arial, sans-serif" font-size="10">I2C Bus (SDA/SCL)</text>
+    
+    <line x1="70" y1="850" x2="90" y2="850" stroke="#4caf50" stroke-width="2"/>
+    <text x="100" y="855" font-family="Arial, sans-serif" font-size="10">UART (GPS)</text>
+    
+    <line x1="70" y1="865" x2="90" y2="865" stroke="#2196f3" stroke-width="2"/>
+    <text x="100" y="870" font-family="Arial, sans-serif" font-size="10">Analog Inputs</text>
+    
+    <line x1="200" y1="835" x2="220" y2="835" stroke="#9c27b0" stroke-width="2"/>
+    <text x="230" y="840" font-family="Arial, sans-serif" font-size="10">Digital I/O</text>
+    
+    <line x1="200" y1="850" x2="220" y2="850" stroke="#f44336" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="230" y="855" font-family="Arial, sans-serif" font-size="10">Power (+3.3V/+5V)</text>
+  </g>
+  
+  <!-- Pin Connection Details -->
+  <g id="pin_details">
+    <rect x="400" y="600" width="400" height="280" fill="white" stroke="#ccc" stroke-width="1" rx="5"/>
+    <text x="600" y="620" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">
+      Pin Connection Details
+    </text>
+    
+    <g font-family="Arial, sans-serif" font-size="11">
+      <!-- Analog Pins -->
+      <text x="420" y="645" font-weight="bold">Analog Pins:</text>
+      <text x="430" y="660">A0 - Potentiometer (Voltage Monitor)</text>
+      <text x="430" y="675">A1 - Thermistor 0 (Inlet Temperature)</text>
+      <text x="430" y="690">A2 - Thermistor 1 (Ambient Temperature)</text>
+      
+      <!-- Digital Pins -->
+      <text x="420" y="715" font-weight="bold">Digital Pins:</text>
+      <text x="430" y="730">D13 - DST Button Input (INPUT_PULLUP)</text>
+      
+      <!-- Serial/UART -->
+      <text x="420" y="755" font-weight="bold">Serial/UART:</text>
+      <text x="430" y="770">TX1/RX1 - GPS Module Communication</text>
+      
+      <!-- I2C Devices -->
+      <text x="420" y="795" font-weight="bold">I2C Devices (SDA/SCL):</text>
+      <text x="430" y="810">0x00 - LCD Display 0 (GPS Data)</text>
+      <text x="430" y="825">0x01 - LCD Display 1 (Sensor Data)</text>
+      <text x="430" y="840">0x70 - 7-Segment Display 0 (Speed)</text>
+      <text x="430" y="855">0x71 - 7-Segment Display 1 (Time)</text>
+      <text x="430" y="870">LSM303 - Accelerometer/Magnetometer</text>
+    </g>
+  </g>
+</svg>

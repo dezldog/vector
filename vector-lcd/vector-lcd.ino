@@ -1,7 +1,5 @@
 // dezldog cobbled and glued this together
 // Complete dashboard for an electric car or off road vehicle
-// Some of the code is mine, some code borrowed from Adafruit, probably some borrowed from others, please share away!
-// Buy your stuff from Adafruit - their tutorials and information are priceless
 
 // This is written for Arduino Zero and similar
 
